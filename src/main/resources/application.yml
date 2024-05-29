@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: AirLineApi
+  datasource:
+    url: jdbc:postgresql://localhost:5441/airline
+    username: user
+    password: password
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog-master.xml
+    drop-first: true

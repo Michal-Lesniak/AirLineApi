@@ -1,0 +1,28 @@
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+    <changeSet id="003-ticket-table-creation-" author="mlesniak">
+        <createTable tableName="ticket">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="seat_number" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ticket_number" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price" type="decimal(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="flight_id" type="bigint">
+                <constraints foreignKeyName="ticket_flight_fk" references="flight(id)" />
+            </column>
+            <column name="person_id" type="bigint">
+                <constraints foreignKeyName="ticket_person_fk" references="person(id)" />
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

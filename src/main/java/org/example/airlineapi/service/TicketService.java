@@ -1,0 +1,131 @@
+package org.example.airlineapi.service;
+
+import jakarta.persistence.OptimisticLockException;
+import lombok.RequiredArgsConstructor;
+import org.example.airlineapi.exception.DeleteOptimisticLockingException;
+import org.example.airlineapi.exception.LackOfSeatException;
+import org.example.airlineapi.exception.NotFoundException;
+import org.example.airlineapi.exception.UpdateOptimisticLockingException;
+import org.example.airlineapi.mapper.TicketMapper;
+import org.example.airlineapi.model.flight.Flight;
+import org.example.airlineapi.model.person.Person;
+import org.example.airlineapi.model.ticket.Ticket;
+import org.example.airlineapi.model.ticket.TicketSearchCriteria;
+import org.example.airlineapi.model.ticket.command.CreateTicketCommand;
+import org.example.airlineapi.model.ticket.command.UpdateTicketPersonCommand;
+import org.example.airlineapi.model.ticket.dto.TicketDto;
+import org.example.airlineapi.repository.FlightRepository;
+import org.example.airlineapi.repository.PersonRepository;
+import org.example.airlineapi.repository.TicketRepository;
+import org.example.airlineapi.utils.TicketSpecs;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.text.MessageFormat;
+import java.util.List;
+
+import static org.example.airlineapi.mapper.TicketMapper.toDto;
+
+@Service
+@RequiredArgsConstructor
+public class TicketService {
+
+    private final TicketRepository ticketRepository;
+    private final PersonRepository personRepository;
+    private final FlightRepository flightRepository;
+
+    @Transactional(readOnly = true)
+    public List<TicketDto> getAll() {
+        return ticketRepository.findAll()
+                .stream()
+                .map(TicketMapper::toDto)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<TicketDto> search(Pageable pageable, TicketSearchCriteria criteria) {
+        Specification<Ticket> specs = TicketSpecs.createSpecs(criteria);
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
+
+        return ticketRepository.findAll(specs, pageRequest)
+                .stream()
+                .map(TicketMapper::toDto)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public TicketDto getById(long id) {
+        return ticketRepository.findById(id)
+                .map(TicketMapper::toDto)
+                .orElseThrow(() -> new NotFoundException(MessageFormat
+                        .format("Ticket with id {0} not found", id)));
+    }
+
+    @Transactional
+    public TicketDto create(CreateTicketCommand command) {
+        Ticket ticket = TicketMapper.fromCommand(command);
+
+        Flight flight = flightRepository.findWithLockById(command.getFlightId())
+                .orElseThrow(() -> new NotFoundException(MessageFormat
+                        .format("Flight with id {0} not found", command.getFlightId())));
+
+        if(flight.getAvailableSeats() == 0 ){
+            throw new LackOfSeatException(MessageFormat
+                    .format("Flight with id {0} has no available seats", command.getFlightId()));
+        }
+
+        Person person = personRepository.findWithLockById(command.getPersonId())
+                .orElseThrow(() -> new NotFoundException(MessageFormat
+                        .format("Person with id {0} not found", command.getPersonId())));
+
+        if(!ticketRepository.findByPersonIdAndFlightId(command.getPersonId(), command.getFlightId()).isEmpty()){
+            throw new NotFoundException(MessageFormat
+                    .format("Person with id {0} already has a ticket for flight with id {1}", command.getPersonId(), command.getFlightId()));
+        }
+
+        return toDto(ticketRepository.save(ticket));
+    }
+
+    @Transactional
+    public TicketDto updatePerson(long id, UpdateTicketPersonCommand command) {
+        try {
+            Ticket ticket = ticketRepository.findById(id)
+                    .orElseThrow(() -> new NotFoundException(MessageFormat
+                            .format("Ticket with id {0} not found", id)));
+
+            long flightId = ticket.getFlight().getId();
+
+            Person person = personRepository.findWithLockById(command.getPersonId())
+                    .orElseThrow(() -> new NotFoundException(MessageFormat
+                            .format("Person with id {0} not found", command.getPersonId())));
+
+            if(!ticketRepository.findByPersonIdAndFlightId(command.getPersonId(), flightId).isEmpty()){
+                throw new NotFoundException(MessageFormat
+                        .format("Person with id {0} already has a ticket for flight with id {1}", command.getPersonId(), flightId));
+            }
+
+            ticket.setPerson(person);
+            return toDto(ticket);
+        } catch (OptimisticLockException e) {
+            throw new UpdateOptimisticLockingException(MessageFormat
+                    .format("Ticket with id {0} was updated by another user. Please send again your request", id));
+        }
+    }
+
+    @Transactional
+    public void delete(long id) {
+        try {
+            Ticket ticket = ticketRepository.findById(id)
+                    .orElseThrow(() -> new NotFoundException(MessageFormat
+                            .format("Ticket with id {0} not found", id)));
+            ticketRepository.delete(ticket);
+        }catch (OptimisticLockException e) {
+            throw new DeleteOptimisticLockingException(MessageFormat
+                    .format("Ticket with id {0} was updated by another user. Please send again your request", id));
+        }
+    }
+
+}
