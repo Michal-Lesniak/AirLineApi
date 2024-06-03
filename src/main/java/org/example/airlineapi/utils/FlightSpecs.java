@@ -1,9 +1,11 @@
 package org.example.airlineapi.utils;
 
+import org.example.airlineapi.exception.ArgumentCannotBeNullException;
 import org.example.airlineapi.model.flight.Flight;
 import org.example.airlineapi.model.flight.FlightSearchCriteria;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.text.MessageFormat;
 import java.time.LocalDateTime;
 
 public class FlightSpecs {
@@ -33,7 +35,7 @@ public class FlightSpecs {
 
     public static Specification<Flight> createSpecs(FlightSearchCriteria criteria){
         if(criteria == null){
-            throw new IllegalArgumentException("Search criteria cannot be null");
+            throw new ArgumentCannotBeNullException("Flight search criteria cannot be null");
         }
 
         Specification<Flight> specs = Specification.where(null);

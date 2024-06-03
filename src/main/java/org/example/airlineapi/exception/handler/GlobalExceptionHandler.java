@@ -1,8 +1,10 @@
 package org.example.airlineapi.exception.handler;
 
 import org.example.airlineapi.exception.AlreadyHaveTicketException;
+import org.example.airlineapi.exception.ArgumentCannotBeNullException;
 import org.example.airlineapi.exception.DeleteOptimisticLockingException;
-import org.example.airlineapi.exception.LackOfSeatException;
+import org.example.airlineapi.exception.IllegalBehaviourException;
+import org.example.airlineapi.exception.OverbookingException;
 import org.example.airlineapi.exception.NotFoundException;
 import org.example.airlineapi.exception.UpdateOptimisticLockingException;
 import org.example.airlineapi.exception.model.ExceptionDto;
@@ -31,15 +33,27 @@ public class GlobalExceptionHandler {
         return new ExceptionDto(e.getMessage());
     }
 
+    @ExceptionHandler(ArgumentCannotBeNullException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionDto handleArgumentCannotBeNullException(ArgumentCannotBeNullException e) {
+        return new ExceptionDto(e.getMessage());
+    }
+
     @ExceptionHandler(DeleteOptimisticLockingException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ExceptionDto handleDeleteOptimisticLockingException(DeleteOptimisticLockingException e) {
         return new ExceptionDto(e.getMessage());
     }
 
-    @ExceptionHandler(LackOfSeatException.class)
+    @ExceptionHandler(IllegalBehaviourException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ExceptionDto handleLackOfSeatException(LackOfSeatException e) {
+    public ExceptionDto handleIllegalBehaviourException(IllegalBehaviourException e) {
+        return new ExceptionDto(e.getMessage());
+    }
+
+    @ExceptionHandler(OverbookingException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionDto handleLackOfSeatException(OverbookingException e) {
         return new ExceptionDto(e.getMessage());
     }
 

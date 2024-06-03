@@ -36,6 +36,6 @@ public class Person {
     @Version
     private long version;
 
-    @OneToMany(mappedBy = "person", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "person", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Set<Ticket> ticket;
 }

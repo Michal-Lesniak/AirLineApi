@@ -2,8 +2,8 @@ package org.example.airlineapi.service;
 
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
-import org.example.airlineapi.exception.DeleteOptimisticLockingException;
-import org.example.airlineapi.exception.LackOfSeatException;
+import org.example.airlineapi.exception.AlreadyHaveTicketException;
+import org.example.airlineapi.exception.OverbookingException;
 import org.example.airlineapi.exception.NotFoundException;
 import org.example.airlineapi.exception.UpdateOptimisticLockingException;
 import org.example.airlineapi.mapper.TicketMapper;
@@ -18,6 +18,7 @@ import org.example.airlineapi.repository.FlightRepository;
 import org.example.airlineapi.repository.PersonRepository;
 import org.example.airlineapi.repository.TicketRepository;
 import org.example.airlineapi.utils.TicketSpecs;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -46,14 +47,12 @@ public class TicketService {
     }
 
     @Transactional(readOnly = true)
-    public List<TicketDto> search(Pageable pageable, TicketSearchCriteria criteria) {
+    public Page<TicketDto> search(Pageable pageable, TicketSearchCriteria criteria) {
         Specification<Ticket> specs = TicketSpecs.createSpecs(criteria);
         PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
 
         return ticketRepository.findAll(specs, pageRequest)
-                .stream()
-                .map(TicketMapper::toDto)
-                .toList();
+                .map(TicketMapper::toDto);
     }
 
     @Transactional(readOnly = true)
@@ -72,8 +71,8 @@ public class TicketService {
                 .orElseThrow(() -> new NotFoundException(MessageFormat
                         .format("Flight with id {0} not found", command.getFlightId())));
 
-        if(flight.getAvailableSeats() == 0 ){
-            throw new LackOfSeatException(MessageFormat
+        if(flight.getTickets().size() >= flight.getAvailableSeats()){
+            throw new OverbookingException(MessageFormat
                     .format("Flight with id {0} has no available seats", command.getFlightId()));
         }
 
@@ -82,9 +81,12 @@ public class TicketService {
                         .format("Person with id {0} not found", command.getPersonId())));
 
         if(!ticketRepository.findByPersonIdAndFlightId(command.getPersonId(), command.getFlightId()).isEmpty()){
-            throw new NotFoundException(MessageFormat
+            throw new AlreadyHaveTicketException(MessageFormat
                     .format("Person with id {0} already has a ticket for flight with id {1}", command.getPersonId(), command.getFlightId()));
         }
+
+        ticket.setFlight(flight);
+        ticket.setPerson(person);
 
         return toDto(ticketRepository.save(ticket));
     }
@@ -103,7 +105,7 @@ public class TicketService {
                             .format("Person with id {0} not found", command.getPersonId())));
 
             if(!ticketRepository.findByPersonIdAndFlightId(command.getPersonId(), flightId).isEmpty()){
-                throw new NotFoundException(MessageFormat
+                throw new AlreadyHaveTicketException(MessageFormat
                         .format("Person with id {0} already has a ticket for flight with id {1}", command.getPersonId(), flightId));
             }
 
@@ -114,18 +116,4 @@ public class TicketService {
                     .format("Ticket with id {0} was updated by another user. Please send again your request", id));
         }
     }
-
-    @Transactional
-    public void delete(long id) {
-        try {
-            Ticket ticket = ticketRepository.findById(id)
-                    .orElseThrow(() -> new NotFoundException(MessageFormat
-                            .format("Ticket with id {0} not found", id)));
-            ticketRepository.delete(ticket);
-        }catch (OptimisticLockException e) {
-            throw new DeleteOptimisticLockingException(MessageFormat
-                    .format("Ticket with id {0} was updated by another user. Please send again your request", id));
-        }
-    }
-
 }

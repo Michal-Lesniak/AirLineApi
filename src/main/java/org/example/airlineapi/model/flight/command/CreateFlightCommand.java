@@ -2,10 +2,8 @@ package org.example.airlineapi.model.flight.command;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
-import lombok.Value;
 
 import java.time.LocalDateTime;
 

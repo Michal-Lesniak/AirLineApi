@@ -3,15 +3,18 @@ package org.example.airlineapi.service;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.example.airlineapi.exception.DeleteOptimisticLockingException;
+import org.example.airlineapi.exception.IllegalBehaviourException;
 import org.example.airlineapi.exception.NotFoundException;
 import org.example.airlineapi.exception.UpdateOptimisticLockingException;
 import org.example.airlineapi.mapper.FlightMapper;
 import org.example.airlineapi.model.flight.Flight;
 import org.example.airlineapi.model.flight.FlightSearchCriteria;
 import org.example.airlineapi.model.flight.command.CreateFlightCommand;
+import org.example.airlineapi.model.flight.command.UpdateFlightTimeCommand;
 import org.example.airlineapi.model.flight.dto.FlightDto;
 import org.example.airlineapi.repository.FlightRepository;
 import org.example.airlineapi.utils.FlightSpecs;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -39,13 +42,11 @@ public class FlightService {
     }
 
     @Transactional(readOnly = true)
-    public List<FlightDto> search(Pageable pageable, FlightSearchCriteria criteria) {
+    public Page<FlightDto> search(Pageable pageable, FlightSearchCriteria criteria) {
         Specification<Flight> specs = FlightSpecs.createSpecs(criteria);
         PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
         return flightRepository.findAll(specs, pageRequest)
-                .stream()
-                .map(FlightMapper::toDto)
-                .toList();
+                .map(FlightMapper::toDto);
     }
 
     @Transactional(readOnly = true)
@@ -68,6 +69,12 @@ public class FlightService {
             Flight flight = flightRepository.findById(id)
                     .orElseThrow(() -> new NotFoundException(MessageFormat
                             .format("Flight with id {0} not found", id)));
+
+            if(!flight.getTickets().isEmpty()){
+                throw new IllegalBehaviourException(MessageFormat
+                        .format("Flight with id {0} has tickets. Cannot update flight with sold ticket.", id));
+            }
+
             flight.setFlightNumber(command.flightNumber());
             flight.setOrigin(command.origin());
             flight.setDestination(command.destination());
@@ -79,7 +86,20 @@ public class FlightService {
             throw new UpdateOptimisticLockingException(MessageFormat
                     .format("Flight with id {0} was updated by another user. Please send again your request", id));
         }
+    }
 
+    @Transactional
+    public FlightDto updateTime(long id, UpdateFlightTimeCommand command){
+        Flight flight = flightRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(MessageFormat
+                        .format("Flight with id {0} not found", id)));
+
+        flight.setDepartureTime(command.getDepartureTime());
+        flight.setArrivalTime(command.getArrivalTime());
+
+        //TODO send a message to the customers that the flight time was updated
+
+        return toDto(flight);
     }
 
     @Transactional
@@ -88,6 +108,9 @@ public class FlightService {
             Flight flight = flightRepository.findById(id)
                     .orElseThrow(() -> new NotFoundException(MessageFormat
                             .format("Flight with id {0} not found", id)));
+
+            //TODO send a message to the customers that the flight was canceled
+
             flightRepository.delete(flight);
         } catch (OptimisticLockException e) {
             throw new DeleteOptimisticLockingException(MessageFormat

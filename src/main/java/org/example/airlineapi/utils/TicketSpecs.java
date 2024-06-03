@@ -1,5 +1,6 @@
 package org.example.airlineapi.utils;
 
+import org.example.airlineapi.exception.ArgumentCannotBeNullException;
 import org.example.airlineapi.model.ticket.Ticket;
 import org.example.airlineapi.model.ticket.TicketSearchCriteria;
 import org.springframework.data.jpa.domain.Specification;
@@ -19,6 +20,10 @@ public class TicketSpecs {
     }
 
     public static Specification<Ticket> createSpecs(TicketSearchCriteria criteria) {
+        if (criteria == null) {
+            throw new ArgumentCannotBeNullException("Ticket search criteria cannot be null");
+        }
+
         Specification<Ticket> specs = Specification.where(null);
 
         if(criteria.getSeatNumber() != 0) {

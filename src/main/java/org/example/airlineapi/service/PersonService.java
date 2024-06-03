@@ -3,6 +3,7 @@ package org.example.airlineapi.service;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.example.airlineapi.exception.DeleteOptimisticLockingException;
+import org.example.airlineapi.exception.IllegalBehaviourException;
 import org.example.airlineapi.exception.NotFoundException;
 import org.example.airlineapi.exception.UpdateOptimisticLockingException;
 import org.example.airlineapi.mapper.PersonMapper;
@@ -12,6 +13,7 @@ import org.example.airlineapi.model.person.command.CreatePersonCommand;
 import org.example.airlineapi.model.person.dto.PersonDto;
 import org.example.airlineapi.repository.PersonRepository;
 import org.example.airlineapi.utils.PersonSpecs;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -35,14 +37,12 @@ public class PersonService {
     }
 
     @Transactional(readOnly = true)
-    public List<PersonDto> search(Pageable pageable, PersonSearchCriteria criteria) {
+    public Page<PersonDto> search(Pageable pageable, PersonSearchCriteria criteria) {
         Specification<Person> specs = PersonSpecs.createSpecs(criteria);
         PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
 
         return personRepository.findAll(specs, pageRequest)
-                .stream()
-                .map(PersonMapper::toDto)
-                .toList();
+                .map(PersonMapper::toDto);
     }
 
     @Transactional(readOnly = true)
@@ -85,14 +85,19 @@ public class PersonService {
 
     @Transactional
     public void delete(long id) {
+        Person person = personRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Person with id " + id + " not found"));
+
+        if(person.getTicket() != null && !person.getTicket().isEmpty()){
+            throw new IllegalBehaviourException(MessageFormat
+                    .format("Person with id {0} has tickets. Please delete tickets first.", id));
+        }
+
         try {
-            Person person = personRepository.findById(id)
-                    .orElseThrow(() -> new NotFoundException("Person with id " + id + " not found"));
             personRepository.delete(person);
         } catch (OptimisticLockException e){
             throw new DeleteOptimisticLockingException(MessageFormat
                     .format("Person with id {0} was updated by another user. Please refresh and try again.", id));
         }
-
     }
 }
