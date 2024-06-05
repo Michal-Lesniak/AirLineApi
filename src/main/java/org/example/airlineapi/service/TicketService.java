@@ -17,7 +17,8 @@ import org.example.airlineapi.model.ticket.dto.TicketDto;
 import org.example.airlineapi.repository.FlightRepository;
 import org.example.airlineapi.repository.PersonRepository;
 import org.example.airlineapi.repository.TicketRepository;
-import org.example.airlineapi.utils.TicketSpecs;
+import org.example.airlineapi.utils.Specification.TicketSpecs;
+import org.example.airlineapi.utils.TriFunction;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.MessageFormat;
-import java.util.List;
+import java.util.function.BiFunction;
 
 import static org.example.airlineapi.mapper.TicketMapper.toDto;
 
@@ -38,22 +39,24 @@ public class TicketService {
     private final PersonRepository personRepository;
     private final FlightRepository flightRepository;
 
-    @Transactional(readOnly = true)
-    public List<TicketDto> getAll() {
-        return ticketRepository.findAll()
-                .stream()
-                .map(TicketMapper::toDto)
-                .toList();
-    }
 
-    @Transactional(readOnly = true)
-    public Page<TicketDto> search(Pageable pageable, TicketSearchCriteria criteria) {
+    private Page<TicketDto> getAll(TriFunction <Long, PageRequest, Specification<Ticket>, Page<Ticket>> repositoryFunction) {
         Specification<Ticket> specs = TicketSpecs.createSpecs(criteria);
         PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
 
+        Page<Ticket> tickets = repositoryFunction.apply(pageRequest, specs);
         return ticketRepository.findAll(specs, pageRequest)
                 .map(TicketMapper::toDto);
     }
+
+    @Transactional(readOnly = true)
+    public Page<TicketDto> getAllByFlightId(long flightId, Pageable pageable, TicketSearchCriteria criteria) {
+        Specification<Ticket> specs = TicketSpecs.createSpecs(criteria);
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
+        return getAll(() -> ticketRepository.findAllByFlightId(flightId, pageRequest, specs));
+    }
+
+
 
     @Transactional(readOnly = true)
     public TicketDto getById(long id) {
@@ -92,13 +95,11 @@ public class TicketService {
     }
 
     @Transactional
-    public TicketDto updatePerson(long id, UpdateTicketPersonCommand command) {
+    public TicketDto updatePerson(long flightId, long ticketId, UpdateTicketPersonCommand command) {
         try {
-            Ticket ticket = ticketRepository.findById(id)
+            Ticket ticket = ticketRepository.findById(ticketId)
                     .orElseThrow(() -> new NotFoundException(MessageFormat
-                            .format("Ticket with id {0} not found", id)));
-
-            long flightId = ticket.getFlight().getId();
+                            .format("Ticket with id {0} not found", ticketId)));
 
             Person person = personRepository.findWithLockById(command.getPersonId())
                     .orElseThrow(() -> new NotFoundException(MessageFormat
@@ -113,7 +114,7 @@ public class TicketService {
             return toDto(ticket);
         } catch (OptimisticLockException e) {
             throw new UpdateOptimisticLockingException(MessageFormat
-                    .format("Ticket with id {0} was updated by another user. Please send again your request", id));
+                    .format("Ticket with id {0} was updated by another user. Please send again your request", ticketId));
         }
     }
 }

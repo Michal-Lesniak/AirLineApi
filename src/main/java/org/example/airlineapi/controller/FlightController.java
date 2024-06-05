@@ -5,7 +5,12 @@ import org.example.airlineapi.model.flight.FlightSearchCriteria;
 import org.example.airlineapi.model.flight.command.CreateFlightCommand;
 import org.example.airlineapi.model.flight.command.UpdateFlightTimeCommand;
 import org.example.airlineapi.model.flight.dto.FlightDto;
+import org.example.airlineapi.model.ticket.TicketSearchCriteria;
+import org.example.airlineapi.model.ticket.command.CreateTicketCommand;
+import org.example.airlineapi.model.ticket.command.UpdateTicketPersonCommand;
+import org.example.airlineapi.model.ticket.dto.TicketDto;
 import org.example.airlineapi.service.FlightService;
+import org.example.airlineapi.service.TicketService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -29,6 +34,7 @@ import java.util.List;
 public class FlightController {
 
     private final FlightService flightService;
+    private final TicketService ticketService;
 
     @GetMapping
     public List<FlightDto> getAll(){
@@ -65,6 +71,22 @@ public class FlightController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable long id){
         flightService.delete(id);
+    }
+
+    @GetMapping("/{flightId}/tickets")
+    public Page<TicketDto> getAllByFlightId(@PathVariable(@PathVariable) long flightId, @PageableDefault Pageable pageable, @RequestBody TicketSearchCriteria criteria){
+        return ticketService.getAllByFlightId(pageable, criteria);
+    }
+
+    @PostMapping("/{id}/tickets")
+    @ResponseStatus(HttpStatus.CREATED)
+    public TicketDto create(@PathVariable("id") long flightId, @RequestBody CreateTicketCommand command){
+        return ticketService.create(command);
+    }
+
+    @PutMapping("/{flightId}/tickets/{ticketId}")
+    public TicketDto updatePerson(@PathVariable("flightId") long flightId, @PathVariable("ticketId") long ticketId, @RequestBody UpdateTicketPersonCommand command){
+        return ticketService.updatePerson(flightId, ticketId, command);
     }
 
 }

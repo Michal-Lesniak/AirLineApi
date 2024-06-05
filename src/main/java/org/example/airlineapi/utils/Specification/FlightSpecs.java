@@ -1,11 +1,10 @@
-package org.example.airlineapi.utils;
+package org.example.airlineapi.utils.Specification;
 
 import org.example.airlineapi.exception.ArgumentCannotBeNullException;
 import org.example.airlineapi.model.flight.Flight;
 import org.example.airlineapi.model.flight.FlightSearchCriteria;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.text.MessageFormat;
 import java.time.LocalDateTime;
 
 public class FlightSpecs {

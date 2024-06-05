@@ -8,4 +8,4 @@
     <include file="changelog/004-add-version-column-to-flight.xml" relativeToChangelogFile="true"/>
     <include file="changelog/005-add-version-column-to-person.xml" relativeToChangelogFile="true"/>
     <include file="changelog/006-add-version-column-to-ticket.xml" relativeToChangelogFile="true"/>
-</databaseChangeLog> .
+</databaseChangeLog>

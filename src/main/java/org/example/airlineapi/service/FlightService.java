@@ -13,7 +13,7 @@ import org.example.airlineapi.model.flight.command.CreateFlightCommand;
 import org.example.airlineapi.model.flight.command.UpdateFlightTimeCommand;
 import org.example.airlineapi.model.flight.dto.FlightDto;
 import org.example.airlineapi.repository.FlightRepository;
-import org.example.airlineapi.utils.FlightSpecs;
+import org.example.airlineapi.utils.Specification.FlightSpecs;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

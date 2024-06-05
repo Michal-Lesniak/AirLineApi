@@ -1,4 +1,4 @@
-package org.example.airlineapi.utils;
+package org.example.airlineapi.utils.Specification;
 
 import org.example.airlineapi.exception.ArgumentCannotBeNullException;
 import org.example.airlineapi.model.ticket.Ticket;

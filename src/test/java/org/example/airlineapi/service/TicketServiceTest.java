@@ -15,7 +15,7 @@ import org.example.airlineapi.model.ticket.dto.TicketDto;
 import org.example.airlineapi.repository.FlightRepository;
 import org.example.airlineapi.repository.PersonRepository;
 import org.example.airlineapi.repository.TicketRepository;
-import org.example.airlineapi.utils.TicketSpecs;
+import org.example.airlineapi.utils.Specification.TicketSpecs;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

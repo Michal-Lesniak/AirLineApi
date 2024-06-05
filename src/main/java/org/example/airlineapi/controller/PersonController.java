@@ -4,7 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.example.airlineapi.model.person.PersonSearchCriteria;
 import org.example.airlineapi.model.person.command.CreatePersonCommand;
 import org.example.airlineapi.model.person.dto.PersonDto;
+import org.example.airlineapi.model.ticket.TicketSearchCriteria;
+import org.example.airlineapi.model.ticket.dto.TicketDto;
 import org.example.airlineapi.service.PersonService;
+import org.example.airlineapi.service.TicketService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -27,6 +30,7 @@ import java.util.List;
 public class PersonController {
 
     private final PersonService personService;
+    private final TicketService ticketService;
 
     @GetMapping
     public List<PersonDto> getAll(){
@@ -59,6 +63,11 @@ public class PersonController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable long id){
         personService.delete(id);
+    }
+
+    @GetMapping("/{personId}/tickets")
+    public Page<TicketDto> getAllByPersonId(@PageableDefault Pageable pageable, @RequestBody TicketSearchCriteria criteria){
+        return ticketService.getAllByPersonId(pageable, criteria);
     }
 
 }

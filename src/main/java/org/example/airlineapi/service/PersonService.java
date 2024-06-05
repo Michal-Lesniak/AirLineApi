@@ -12,7 +12,7 @@ import org.example.airlineapi.model.person.PersonSearchCriteria;
 import org.example.airlineapi.model.person.command.CreatePersonCommand;
 import org.example.airlineapi.model.person.dto.PersonDto;
 import org.example.airlineapi.repository.PersonRepository;
-import org.example.airlineapi.utils.PersonSpecs;
+import org.example.airlineapi.utils.Specification.PersonSpecs;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

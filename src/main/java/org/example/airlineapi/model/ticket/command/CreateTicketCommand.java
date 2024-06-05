@@ -21,8 +21,5 @@ public class CreateTicketCommand {
     private double price;
 
     @Positive(message = "NEGATIVE_OR_ZERO")
-    private long flightId;
-
-    @Positive(message = "NEGATIVE_OR_ZERO")
     private long personId;
 }

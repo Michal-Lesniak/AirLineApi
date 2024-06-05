@@ -7,7 +7,7 @@ import org.example.airlineapi.model.person.PersonSearchCriteria;
 import org.example.airlineapi.model.person.command.CreatePersonCommand;
 import org.example.airlineapi.model.person.dto.PersonDto;
 import org.example.airlineapi.repository.PersonRepository;
-import org.example.airlineapi.utils.PersonSpecs;
+import org.example.airlineapi.utils.Specification.PersonSpecs;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,7 +28,6 @@ import static org.example.airlineapi.mapper.PersonMapper.fromCommand;
 import static org.example.airlineapi.mapper.PersonMapper.toDto;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyShort;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -177,8 +176,6 @@ class PersonServiceTest {
         verify(personRepository).findById(id);
         verifyNoMoreInteractions(personRepository);
     }
-
-    //TODO optimistic locking test
 
     @Test
     void testDelete_ShouldDeletePerson() {
