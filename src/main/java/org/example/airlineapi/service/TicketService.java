@@ -40,20 +40,22 @@ public class TicketService {
     private final FlightRepository flightRepository;
 
 
-    private Page<TicketDto> getAll(TriFunction <Long, PageRequest, Specification<Ticket>, Page<Ticket>> repositoryFunction) {
+    private Page<TicketDto> getAll(long id, Pageable pageable, TicketSearchCriteria criteria, TriFunction <Long, PageRequest, Specification<Ticket>, Page<Ticket>> repositoryFunction) {
         Specification<Ticket> specs = TicketSpecs.createSpecs(criteria);
         PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
 
-        Page<Ticket> tickets = repositoryFunction.apply(pageRequest, specs);
-        return ticketRepository.findAll(specs, pageRequest)
-                .map(TicketMapper::toDto);
+        Page<Ticket> tickets = repositoryFunction.apply(id, pageRequest, specs);
+        return tickets.map(TicketMapper::toDto);
     }
 
     @Transactional(readOnly = true)
     public Page<TicketDto> getAllByFlightId(long flightId, Pageable pageable, TicketSearchCriteria criteria) {
-        Specification<Ticket> specs = TicketSpecs.createSpecs(criteria);
-        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
-        return getAll(() -> ticketRepository.findAllByFlightId(flightId, pageRequest, specs));
+        return getAll(flightId, pageable, criteria, ticketRepository::findAllByFlightId);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TicketDto> getAllByPersonId(long personId, Pageable pageable, TicketSearchCriteria criteria) {
+        return getAll(personId, pageable, criteria, ticketRepository::findAllByPersonId);
     }
 
 
@@ -67,25 +69,25 @@ public class TicketService {
     }
 
     @Transactional
-    public TicketDto create(CreateTicketCommand command) {
+    public TicketDto create(long flightId, CreateTicketCommand command) {
         Ticket ticket = TicketMapper.fromCommand(command);
 
-        Flight flight = flightRepository.findWithLockById(command.getFlightId())
+        Flight flight = flightRepository.findWithLockById(flightId)
                 .orElseThrow(() -> new NotFoundException(MessageFormat
-                        .format("Flight with id {0} not found", command.getFlightId())));
+                        .format("Flight with id {0} not found", flightId)));
 
         if(flight.getTickets().size() >= flight.getAvailableSeats()){
             throw new OverbookingException(MessageFormat
-                    .format("Flight with id {0} has no available seats", command.getFlightId()));
+                    .format("Flight with id {0} has no available seats", flight));
         }
 
         Person person = personRepository.findWithLockById(command.getPersonId())
                 .orElseThrow(() -> new NotFoundException(MessageFormat
                         .format("Person with id {0} not found", command.getPersonId())));
 
-        if(!ticketRepository.findByPersonIdAndFlightId(command.getPersonId(), command.getFlightId()).isEmpty()){
+        if(!ticketRepository.findByPersonIdAndFlightId(command.getPersonId(), flightId).isEmpty()){
             throw new AlreadyHaveTicketException(MessageFormat
-                    .format("Person with id {0} already has a ticket for flight with id {1}", command.getPersonId(), command.getFlightId()));
+                    .format("Person with id {0} already has a ticket for flight with id {1}", command.getPersonId(), flightId));
         }
 
         ticket.setFlight(flight);

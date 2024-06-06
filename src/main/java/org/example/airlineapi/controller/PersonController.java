@@ -42,7 +42,6 @@ public class PersonController {
         return personService.search(pageable, criteria);
     }
 
-
     @GetMapping("/{id}")
     public PersonDto getPersonById(@PathVariable long id){
         return personService.getById(id);
@@ -66,8 +65,8 @@ public class PersonController {
     }
 
     @GetMapping("/{personId}/tickets")
-    public Page<TicketDto> getAllByPersonId(@PageableDefault Pageable pageable, @RequestBody TicketSearchCriteria criteria){
-        return ticketService.getAllByPersonId(pageable, criteria);
+    public Page<TicketDto> getAllByPersonId(@PathVariable("personId") long id, @PageableDefault Pageable pageable, @RequestBody TicketSearchCriteria criteria){
+        return ticketService.getAllByPersonId(id, pageable, criteria);
     }
 
 }

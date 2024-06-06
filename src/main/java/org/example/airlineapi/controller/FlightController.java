@@ -74,14 +74,14 @@ public class FlightController {
     }
 
     @GetMapping("/{flightId}/tickets")
-    public Page<TicketDto> getAllByFlightId(@PathVariable(@PathVariable) long flightId, @PageableDefault Pageable pageable, @RequestBody TicketSearchCriteria criteria){
-        return ticketService.getAllByFlightId(pageable, criteria);
+    public Page<TicketDto> getAllByFlightId(@PathVariable("flightId") long flightId, @PageableDefault Pageable pageable, @RequestBody TicketSearchCriteria criteria){
+        return ticketService.getAllByFlightId(flightId, pageable, criteria);
     }
 
-    @PostMapping("/{id}/tickets")
+    @PostMapping("/{flightId}/tickets")
     @ResponseStatus(HttpStatus.CREATED)
-    public TicketDto create(@PathVariable("id") long flightId, @RequestBody CreateTicketCommand command){
-        return ticketService.create(command);
+    public TicketDto create(@PathVariable("flightId") long flightId, @RequestBody CreateTicketCommand command){
+        return ticketService.create(flightId, command);
     }
 
     @PutMapping("/{flightId}/tickets/{ticketId}")
