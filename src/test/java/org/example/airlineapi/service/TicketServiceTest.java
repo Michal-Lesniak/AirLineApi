@@ -243,7 +243,7 @@ class TicketServiceTest {
 
         assertThatExceptionOfType(AlreadyHaveTicketException.class)
                 .isThrownBy(() -> ticketService.create(flightId, command))
-                .withMessage("Person with id " + command.getPersonId() + " already has a ticket for flight with id " + command.getFlightId());
+                .withMessage("Person with id " + command.getPersonId() + " already has a ticket for flight with id " + flightId);
         verify(flightRepository).findWithLockById(flightId);
         verify(personRepository).findWithLockById(command.getPersonId());
         verify(ticketRepository).findByPersonIdAndFlightId(command.getPersonId(), flightId);
