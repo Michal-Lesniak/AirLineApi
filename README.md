@@ -7,8 +7,8 @@ Handle all exceptions with RestControllerAdvice \
 Well structured app \
 LiquidBase to version db \
 Postgres with PgAdmin working from Image \
-Integrated tests - in progress \
-Unit tests - in progress 
+Integrated tests  \
+Unit tests 
 
 
  
