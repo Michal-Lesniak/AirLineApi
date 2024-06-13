@@ -19,12 +19,15 @@ import org.example.airlineapi.utils.Specification.TicketSpecs;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
@@ -38,6 +41,7 @@ import static org.example.airlineapi.mapper.TicketMapper.fromCommand;
 import static org.example.airlineapi.mapper.TicketMapper.toDto;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -55,6 +59,13 @@ class TicketServiceTest {
 
     @InjectMocks
     private TicketService ticketService;
+
+    @Captor
+    private ArgumentCaptor<Specification> specsCaptor;
+
+    @Captor
+    private ArgumentCaptor<Pageable> pageableCaptor;
+
 
     Ticket ticket1;
     Ticket ticket2;
@@ -98,18 +109,17 @@ class TicketServiceTest {
     @Test
     void testGetAllByFlightId_ShouldReturnListOfTicketDtos() {
         long flightId = 1L;
-        PageRequest pageRequest = PageRequest.of(0, 2);
+        Pageable pageRequest = PageRequest.of(0, 2);
         TicketSearchCriteria searchCriteria = TicketSearchCriteria.builder().build();
         Page<TicketDto> expectedPage = new PageImpl<>(List.of(toDto(ticket1), toDto(ticket2)));
-        Specification<Ticket> specs = TicketSpecs.createSpecs(searchCriteria);
 
-        when(ticketRepository.findAllByFlightId(flightId, pageRequest, specs)).thenReturn(new PageImpl(List.of(ticket1, ticket2)));
+        when(ticketRepository.findAll(specsCaptor.capture(), pageableCaptor.capture())).thenReturn(new PageImpl(List.of(ticket1, ticket2)));
         Page<TicketDto> result = ticketService.getAllByFlightId(flightId, pageRequest, searchCriteria);
 
         assertEquals(expectedPage.getTotalElements(), result.getTotalElements());
         assertEquals(expectedPage.getContent().get(0), result.getContent().get(0));
         assertEquals(expectedPage.getContent().get(1), result.getContent().get(1));
-        verify(ticketRepository).findAllByFlightId(flightId, pageRequest, specs);
+        verify(ticketRepository).findAll(specsCaptor.getValue(), pageableCaptor.getValue());
         verifyNoMoreInteractions(ticketRepository);
     }
 
@@ -119,15 +129,14 @@ class TicketServiceTest {
         PageRequest pageRequest = PageRequest.of(0, 2);
         TicketSearchCriteria searchCriteria = TicketSearchCriteria.builder().build();
         Page<TicketDto> expectedPage = new PageImpl<>(List.of(toDto(ticket1), toDto(ticket2)));
-        Specification<Ticket> specs = TicketSpecs.createSpecs(searchCriteria);
 
-        when(ticketRepository.findAllByPersonId(personId, pageRequest, specs)).thenReturn(new PageImpl(List.of(ticket1, ticket2)));
-        Page<TicketDto> result = ticketService.getAllByFlightId(personId, pageRequest, searchCriteria);
+        when(ticketRepository.findAll(specsCaptor.capture(), pageableCaptor.capture())).thenReturn(new PageImpl(List.of(ticket1, ticket2)));
+        Page<TicketDto> result = ticketService.getAllByPersonId(personId, pageRequest, searchCriteria);
 
         assertEquals(expectedPage.getTotalElements(), result.getTotalElements());
         assertEquals(expectedPage.getContent().get(0), result.getContent().get(0));
         assertEquals(expectedPage.getContent().get(1), result.getContent().get(1));
-        verify(ticketRepository).findAllByFlightId(personId, pageRequest, specs);
+        verify(ticketRepository).findAll(specsCaptor.getValue(), pageableCaptor.getValue());
         verifyNoMoreInteractions(ticketRepository);
     }
 
@@ -252,57 +261,60 @@ class TicketServiceTest {
 
     @Test
     void testUpdatePerson_ShouldUpdateTicketPerson() {
-        long id = 1L;
+        long ticketId = 1L;
+        long flightId = 1L;
         UpdateTicketPersonCommand command = updateTicketPersonCommand();
         Ticket ticket = ticket1;
         ticket.setFlight(flight);
         ticket.setPerson(person);
         TicketDto expectedDto = toDto(ticket);
 
-        when(ticketRepository.findById(id)).thenReturn(Optional.ofNullable(ticket));
+        when(ticketRepository.findById(ticketId)).thenReturn(Optional.ofNullable(ticket));
         when(personRepository.findWithLockById(command.getPersonId())).thenReturn(Optional.ofNullable(person));
         when(ticketRepository.findByPersonIdAndFlightId(command.getPersonId(), ticket.getFlight().getId())).thenReturn(List.of());
 
-        TicketDto result = ticketService.updatePerson(id, command);
+        TicketDto result = ticketService.updatePerson(flightId, ticketId, command);
 
         assertEquals(expectedDto, result);
-        verify(ticketRepository).findById(id);
+        verify(ticketRepository).findById(ticketId);
         verify(personRepository).findWithLockById(command.getPersonId());
         verifyNoMoreInteractions(ticketRepository, personRepository);
     }
 
     @Test
     void testUpdatePerson_NewPersonNotFound_ShouldThrowNotFoundException() {
-        long id = 1L;
+        long ticketId = 1L;
+        long flightId = 1L;
         UpdateTicketPersonCommand command = updateTicketPersonCommand();
 
-        when(ticketRepository.findById(id)).thenReturn(Optional.of(ticket1));
+        when(ticketRepository.findById(ticketId)).thenReturn(Optional.of(ticket1));
         when(personRepository.findWithLockById(command.getPersonId())).thenReturn(Optional.empty());
 
         assertThatExceptionOfType(NotFoundException.class)
-                .isThrownBy(() -> ticketService.updatePerson(id, command))
+                .isThrownBy(() -> ticketService.updatePerson(flightId, ticketId, command))
                 .withMessage("Person with id " + command.getPersonId() + " not found");
-        verify(ticketRepository).findById(id);
+        verify(ticketRepository).findById(ticketId);
         verify(personRepository).findWithLockById(command.getPersonId());
         verifyNoMoreInteractions(ticketRepository, personRepository);
     }
 
     @Test
     void testUpdatePerson_PersonAlreadyHasTicket_ShouldThrowNotFoundException() {
+        long ticketId = 1L;
         long flightId = 1L;
         Ticket tempTicket = Ticket.builder()
                 .id(3L)
                 .build();
         UpdateTicketPersonCommand command = updateTicketPersonCommand();
 
-        when(ticketRepository.findById(id)).thenReturn(Optional.of(ticket1));
+        when(ticketRepository.findById(ticketId)).thenReturn(Optional.of(ticket1));
         when(personRepository.findWithLockById(command.getPersonId())).thenReturn(Optional.of(person));
         when(ticketRepository.findByPersonIdAndFlightId(command.getPersonId(), flight.getId())).thenReturn(List.of(tempTicket));
 
         assertThatExceptionOfType(AlreadyHaveTicketException.class)
-                .isThrownBy(() -> ticketService.updatePerson(id, command))
+                .isThrownBy(() -> ticketService.updatePerson(flightId, ticketId, command))
                 .withMessage("Person with id " + command.getPersonId() + " already has a ticket for flight with id " + flight.getId());
-        verify(ticketRepository).findById(id);
+        verify(ticketRepository).findById(ticketId);
         verify(personRepository).findWithLockById(command.getPersonId());
         verify(ticketRepository).findByPersonIdAndFlightId(command.getPersonId(), flight.getId());
         verifyNoMoreInteractions(ticketRepository, personRepository);
@@ -311,31 +323,33 @@ class TicketServiceTest {
 
     @Test
     void testUpdatePerson_TicketNotFound_ShouldThrowNotFoundException() {
-        long id = 3L;
+        long flightId = 1L;
+        long ticketId = 3L;
         UpdateTicketPersonCommand command = updateTicketPersonCommand();
 
-        when(ticketRepository.findById(id)).thenReturn(Optional.empty());
+        when(ticketRepository.findById(ticketId)).thenReturn(Optional.empty());
 
         assertThatExceptionOfType(NotFoundException.class)
-                .isThrownBy(() -> ticketService.updatePerson(id, command))
+                .isThrownBy(() -> ticketService.updatePerson(flightId, ticketId, command))
                 .withMessage("Ticket with id 3 not found");
-        verify(ticketRepository).findById(id);
+        verify(ticketRepository).findById(ticketId);
         verifyNoMoreInteractions(ticketRepository);
     }
 
     @Test
     void testUpdatePerson_OptimisticLockException_ShouldThrowUpdateOptimisticLockingException() {
-        long id = 1L;
+        long flightId = 1L;
+        long ticketId = 1L;
         UpdateTicketPersonCommand command = updateTicketPersonCommand();
 
-        when(ticketRepository.findById(id)).thenReturn(Optional.ofNullable(ticket1));
+        when(ticketRepository.findById(ticketId)).thenReturn(Optional.ofNullable(ticket1));
         when(personRepository.findWithLockById(command.getPersonId())).thenThrow(new OptimisticLockException());
 
         assertThatExceptionOfType(UpdateOptimisticLockingException.class)
-                .isThrownBy(() -> ticketService.updatePerson(id, command))
+                .isThrownBy(() -> ticketService.updatePerson(flightId, ticketId, command))
                 .withMessage("Ticket with id 1 was updated by another user. Please send again your request");
 
-        verify(ticketRepository).findById(id);
+        verify(ticketRepository).findById(ticketId);
         verify(personRepository).findWithLockById(command.getPersonId());
         verifyNoMoreInteractions(ticketRepository, personRepository);
     }

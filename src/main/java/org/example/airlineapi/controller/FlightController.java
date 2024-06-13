@@ -1,5 +1,6 @@
 package org.example.airlineapi.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.airlineapi.model.flight.FlightSearchCriteria;
 import org.example.airlineapi.model.flight.command.CreateFlightCommand;
@@ -53,17 +54,17 @@ public class FlightController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public FlightDto create(@RequestBody CreateFlightCommand command){
+    public FlightDto create(@RequestBody @Valid CreateFlightCommand command){
         return flightService.create(command);
     }
 
     @PutMapping("/{id}")
-    public FlightDto update(@PathVariable long id, @RequestBody CreateFlightCommand command){
+    public FlightDto update(@PathVariable long id, @RequestBody @Valid CreateFlightCommand command){
         return flightService.update(id, command);
     }
 
     @PatchMapping("/{id}")
-    public FlightDto updateTime(@PathVariable long id, @RequestBody UpdateFlightTimeCommand  command){
+    public FlightDto updateTime(@PathVariable long id, @RequestBody @Valid UpdateFlightTimeCommand  command){
         return flightService.updateTime(id, command);
     }
 
@@ -80,12 +81,12 @@ public class FlightController {
 
     @PostMapping("/{flightId}/tickets")
     @ResponseStatus(HttpStatus.CREATED)
-    public TicketDto create(@PathVariable("flightId") long flightId, @RequestBody CreateTicketCommand command){
+    public TicketDto create(@PathVariable("flightId") long flightId, @RequestBody @Valid CreateTicketCommand command){
         return ticketService.create(flightId, command);
     }
 
     @PutMapping("/{flightId}/tickets/{ticketId}")
-    public TicketDto updatePerson(@PathVariable("flightId") long flightId, @PathVariable("ticketId") long ticketId, @RequestBody UpdateTicketPersonCommand command){
+    public TicketDto updatePerson(@PathVariable("flightId") long flightId, @PathVariable("ticketId") long ticketId, @RequestBody @Valid UpdateTicketPersonCommand command){
         return ticketService.updatePerson(flightId, ticketId, command);
     }
 

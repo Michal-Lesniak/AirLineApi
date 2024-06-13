@@ -3,6 +3,7 @@ package org.example.airlineapi.service;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.example.airlineapi.exception.AlreadyHaveTicketException;
+import org.example.airlineapi.exception.ArgumentCannotBeNullException;
 import org.example.airlineapi.exception.OverbookingException;
 import org.example.airlineapi.exception.NotFoundException;
 import org.example.airlineapi.exception.UpdateOptimisticLockingException;
@@ -40,22 +41,26 @@ public class TicketService {
     private final FlightRepository flightRepository;
 
 
-    private Page<TicketDto> getAll(long id, Pageable pageable, TicketSearchCriteria criteria, TriFunction <Long, PageRequest, Specification<Ticket>, Page<Ticket>> repositoryFunction) {
-        Specification<Ticket> specs = TicketSpecs.createSpecs(criteria);
-        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
-
-        Page<Ticket> tickets = repositoryFunction.apply(id, pageRequest, specs);
-        return tickets.map(TicketMapper::toDto);
-    }
-
     @Transactional(readOnly = true)
     public Page<TicketDto> getAllByFlightId(long flightId, Pageable pageable, TicketSearchCriteria criteria) {
-        return getAll(flightId, pageable, criteria, ticketRepository::findAllByFlightId);
+        if(criteria == null) {
+            throw new ArgumentCannotBeNullException("Ticket search criteria cannot be null");
+        }
+
+        Specification<Ticket> specification = TicketSpecs.specsWithFlightId(flightId, criteria);
+        return ticketRepository.findAll(specification, pageable)
+                .map(TicketMapper::toDto);
     }
 
     @Transactional(readOnly = true)
     public Page<TicketDto> getAllByPersonId(long personId, Pageable pageable, TicketSearchCriteria criteria) {
-        return getAll(personId, pageable, criteria, ticketRepository::findAllByPersonId);
+        if (criteria == null) {
+            throw new ArgumentCannotBeNullException("Ticket search criteria cannot be null");
+        }
+
+        Specification<Ticket> specification = TicketSpecs.specsWithPersonId(personId, criteria);
+        return ticketRepository.findAll(specification, pageable)
+                .map(TicketMapper::toDto);
     }
 
 
@@ -78,7 +83,7 @@ public class TicketService {
 
         if(flight.getTickets().size() >= flight.getAvailableSeats()){
             throw new OverbookingException(MessageFormat
-                    .format("Flight with id {0} has no available seats", flight));
+                    .format("Flight with id {0} has no available seats", flightId));
         }
 
         Person person = personRepository.findWithLockById(command.getPersonId())

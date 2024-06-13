@@ -1,5 +1,6 @@
 package org.example.airlineapi.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.airlineapi.model.person.PersonSearchCriteria;
 import org.example.airlineapi.model.person.command.CreatePersonCommand;
@@ -49,12 +50,12 @@ public class PersonController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PersonDto create(@RequestBody CreatePersonCommand command){
+    public PersonDto create(@RequestBody @Valid CreatePersonCommand command){
         return personService.create(command);
     }
 
     @PutMapping("/{id}")
-    public PersonDto update(@PathVariable long id, @RequestBody CreatePersonCommand command){
+    public PersonDto update(@PathVariable long id, @RequestBody @Valid CreatePersonCommand command){
         return personService.update(id, command);
     }
 

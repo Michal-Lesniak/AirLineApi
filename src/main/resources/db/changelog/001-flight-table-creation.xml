@@ -11,16 +11,16 @@
             <column name="flight_number" type="varchar(10)">
                 <constraints nullable="false"/>
             </column>
-            <column name="departure" type="varchar(30)">
+            <column name="origin" type="varchar(30)">
                 <constraints nullable="false"/>
             </column>
             <column name="destination" type="varchar(30)">
                 <constraints nullable="false"/>
             </column>
-            <column name="departure_date" type="date">
+            <column name="departure_time" type="timestamp">
                 <constraints nullable="false"/>
             </column>
-            <column name="arrival_date" type="date">
+            <column name="arrival_time" type="timestamp">
                 <constraints nullable="false"/>
             </column>
             <column name="available_seats" type="int">

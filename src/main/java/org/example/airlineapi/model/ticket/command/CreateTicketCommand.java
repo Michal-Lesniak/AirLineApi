@@ -11,9 +11,11 @@ import lombok.Value;
 public class CreateTicketCommand {
 
     @Positive(message = "NEGATIVE_OR_ZERO")
+    @NotNull(message = "NOT_NULL")
     private long seatNumber;
 
     @Positive(message = "NEGATIVE_OR_ZERO")
+    @NotNull(message = "NOT_NULL")
     private long ticketNumber;
 
     @NotNull(message = "NOT_NULL")
@@ -21,5 +23,6 @@ public class CreateTicketCommand {
     private double price;
 
     @Positive(message = "NEGATIVE_OR_ZERO")
+    @NotNull(message = "NOT_NULL")
     private long personId;
 }

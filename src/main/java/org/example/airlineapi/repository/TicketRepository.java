@@ -11,7 +11,4 @@ import java.util.List;
 
 public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecificationExecutor<Ticket> {
     List<Ticket> findByPersonIdAndFlightId(long personId, long flightId);
-
-    Page<Ticket> findAllByFlightId(long flightId, Pageable pageable, Specification<Ticket> specs);
-    Page<Ticket> findAllByPersonId(long personId, Pageable pageable, Specification<Ticket> specs);
 }

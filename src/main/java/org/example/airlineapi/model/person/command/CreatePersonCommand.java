@@ -1,7 +1,6 @@
 package org.example.airlineapi.model.person.command;
 
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
@@ -23,11 +22,14 @@ public class CreatePersonCommand {
     private String lastName;
 
     @Email(message = "INVALID_EMAIL")
+    @NotNull(message = "NOT_NULL")
     private String email;
 
+    @NotNull(message = "NOT_NULL")
     @Pattern(regexp = "[0-9]{9}", message = "PATTERN_MISMATCH_{regexp}")
     private String phoneNumber;
 
     @Past(message = "DATE_IN_FUTURE")
+    @NotNull(message = "NOT_NULL")
     private LocalDate dateOfBirth;
 }

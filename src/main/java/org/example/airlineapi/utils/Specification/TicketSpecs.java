@@ -7,19 +7,27 @@ import org.springframework.data.jpa.domain.Specification;
 
 public class TicketSpecs {
 
-    public static Specification<Ticket> equalSeatNumber(long seatNumber) {
+    private static Specification<Ticket> equalSeatNumber(long seatNumber) {
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("seatNumber"), seatNumber);
     }
 
-    public static Specification<Ticket> equalTicketNumber(long ticketNumber) {
+    private static Specification<Ticket> equalTicketNumber(long ticketNumber) {
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("ticketNumber"), ticketNumber);
     }
 
-    public static Specification<Ticket> equalPrice(double price) {
+    private static Specification<Ticket> equalPrice(double price) {
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("price"), price);
     }
 
-    public static Specification<Ticket> createSpecs(TicketSearchCriteria criteria) {
+    private static Specification<Ticket> hasFlightId(long flightId) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("flight").get("id"), flightId);
+    }
+
+    private static Specification<Ticket> hasPersonId(long personId) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("person").get("id"), personId);
+    }
+
+    private static Specification<Ticket> createSpecs(TicketSearchCriteria criteria) {
         if (criteria == null) {
             throw new ArgumentCannotBeNullException("Ticket search criteria cannot be null");
         }
@@ -40,4 +48,16 @@ public class TicketSpecs {
 
         return specs;
     }
+
+    public static Specification<Ticket> specsWithPersonId(long personId, TicketSearchCriteria criteria) {
+        Specification<Ticket> specs = createSpecs(criteria);
+        return specs.and(hasPersonId(personId));
+
+    }
+
+    public static Specification<Ticket> specsWithFlightId(long flightId, TicketSearchCriteria criteria) {
+        Specification<Ticket> specs = createSpecs(criteria);
+        return specs.and(hasFlightId(flightId));
+    }
+
 }
