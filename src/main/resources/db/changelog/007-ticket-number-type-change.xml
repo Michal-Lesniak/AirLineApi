@@ -1,12 +1,12 @@
 <databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
-        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
-        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="007-ticket-number-type-change" author="mlesniak">
         <modifyDataType tableName="ticket" columnName="ticket_number" newDataType="varchar(10)"/>
         <rollback>
-            <modifyDataType tableName="ticket" columnName="seat_number" newDataType="int"/>
+            <modifyDataType tableName="ticket" columnName="ticket_number" newDataType="int"/>
         </rollback>
     </changeSet>
 </databaseChangeLog>

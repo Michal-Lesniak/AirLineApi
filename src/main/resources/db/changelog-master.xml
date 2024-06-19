@@ -1,11 +1,13 @@
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <include file="changelog/001-flight-table-creation.xml" relativeToChangelogFile="true"/>
     <include file="changelog/002-person-table-creation.xml" relativeToChangelogFile="true"/>
     <include file="changelog/003-ticket-table-creation.xml" relativeToChangelogFile="true"/>
     <include file="changelog/004-add-version-column-to-flight.xml" relativeToChangelogFile="true"/>
     <include file="changelog/005-add-version-column-to-person.xml" relativeToChangelogFile="true"/>
     <include file="changelog/006-add-version-column-to-ticket.xml" relativeToChangelogFile="true"/>
+    <include file="changelog/007-ticket-number-type-change.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
