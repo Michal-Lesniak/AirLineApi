@@ -15,6 +15,8 @@ import lombok.Setter;
 import org.example.airlineapi.model.flight.Flight;
 import org.example.airlineapi.model.person.Person;
 
+import java.math.BigDecimal;
+
 @Entity
 @Getter
 @Setter
@@ -26,8 +28,8 @@ public class Ticket {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     private long seatNumber;
-    private long ticketNumber;
-    private double price;
+    private String ticketNumber;
+    private BigDecimal price;
 
     @Version
     private long version;

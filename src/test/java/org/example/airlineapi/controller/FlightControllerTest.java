@@ -17,7 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -82,6 +82,14 @@ class FlightControllerTest {
     void getFlightById_NotFound_ShouldReturnNotFound() throws Exception {
         mockMvc.perform(get("/api/v1/flights/999"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getFreeSeats_ShouldReturnListOfFreeSeats() throws Exception {
+        mockMvc.perform(get("/api/v1/flights/1/free-seats"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$", hasSize(148)));
     }
 
 
@@ -213,27 +221,40 @@ class FlightControllerTest {
     void createTicket_ShouldCreateTicketForFlight() throws Exception {
         CreateTicketCommand command = CreateTicketCommand.builder()
                 .personId(4)
-                .seatNumber(1)
-                .price(100.0)
-                .ticketNumber(1)
+                .seatNumber(3)
+                .price(BigDecimal.valueOf(100.0))
                 .build();
 
         mockMvc.perform(post("/api/v1/flights/1/tickets")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(command)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.seatNumber").value(1))
-                .andExpect(jsonPath("$.price").value(100.0));
+                .andExpect(jsonPath("$.seatNumber").value(3))
+                .andExpect(jsonPath("$.price").value(BigDecimal.valueOf(100.0)));
     }
 
+
+    @Test
+    void createTicket_seatNumberAlreadyTaken_badRequest() throws Exception {
+        CreateTicketCommand command = CreateTicketCommand.builder()
+                .personId(4)
+                .seatNumber(1)
+                .price(BigDecimal.valueOf(100.0))
+                .build();
+
+        mockMvc.perform(post("/api/v1/flights/1/tickets")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(command)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Flight with id 1 already has a ticket with seat number 1"));
+    }
 
     @Test
     void createTicket_personHaveAlreadyTicket_badRequest() throws Exception {
         CreateTicketCommand command = CreateTicketCommand.builder()
                 .personId(1)
-                .seatNumber(1)
-                .price(100.0)
-                .ticketNumber(1)
+                .seatNumber(4)
+                .price(BigDecimal.valueOf(100.0))
                 .build();
 
         mockMvc.perform(post("/api/v1/flights/1/tickets")
@@ -254,6 +275,4 @@ class FlightControllerTest {
                         .content(objectMapper.writeValueAsString(command)))
                 .andExpect(status().isOk());
     }
-
-
 }

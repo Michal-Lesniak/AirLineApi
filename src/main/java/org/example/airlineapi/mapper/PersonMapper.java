@@ -3,6 +3,7 @@ package org.example.airlineapi.mapper;
 import org.example.airlineapi.model.person.Person;
 import org.example.airlineapi.model.person.command.CreatePersonCommand;
 import org.example.airlineapi.model.person.dto.PersonDto;
+import org.example.airlineapi.model.person.dto.SimplePersonDto;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -26,6 +27,13 @@ public class PersonMapper {
                 .email(person.getEmail())
                 .phoneNumber(person.getPhoneNumber())
                 .dateOfBirth(person.getDateOfBirth())
+                .build();
+    }
+
+    public static SimplePersonDto toSimpleDto(Person person) {
+        return SimplePersonDto.builder()
+                .firstName(person.getFirstName())
+                .lastName(person.getLastName())
                 .build();
     }
 }

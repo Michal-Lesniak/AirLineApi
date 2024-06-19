@@ -6,6 +6,8 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
 import lombok.Value;
 
+import java.math.BigDecimal;
+
 @Value
 @Builder
 public class CreateTicketCommand {
@@ -14,13 +16,9 @@ public class CreateTicketCommand {
     @NotNull(message = "NOT_NULL")
     private long seatNumber;
 
-    @Positive(message = "NEGATIVE_OR_ZERO")
-    @NotNull(message = "NOT_NULL")
-    private long ticketNumber;
-
     @NotNull(message = "NOT_NULL")
     @PositiveOrZero(message = "NEGATIVE")
-    private double price;
+    private BigDecimal price;
 
     @Positive(message = "NEGATIVE_OR_ZERO")
     @NotNull(message = "NOT_NULL")

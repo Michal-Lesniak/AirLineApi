@@ -7,6 +7,7 @@ import org.example.airlineapi.exception.IllegalBehaviourException;
 import org.example.airlineapi.exception.OverbookingException;
 import org.example.airlineapi.exception.NotFoundException;
 import org.example.airlineapi.exception.UpdateOptimisticLockingException;
+import org.example.airlineapi.exception.model.BookedSeatException;
 import org.example.airlineapi.exception.model.ExceptionDto;
 import org.example.airlineapi.exception.model.ValidationExceptionDto;
 import org.springframework.http.HttpStatus;
@@ -60,6 +61,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AlreadyHaveTicketException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionDto handleAlreadyHaveTicketException(AlreadyHaveTicketException e) {
+        return new ExceptionDto(e.getMessage());
+    }
+
+    @ExceptionHandler(BookedSeatException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionDto handleBookedSeatException(BookedSeatException e) {
         return new ExceptionDto(e.getMessage());
     }
 

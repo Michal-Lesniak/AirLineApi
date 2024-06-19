@@ -15,7 +15,6 @@ import org.example.airlineapi.model.ticket.dto.TicketDto;
 import org.example.airlineapi.repository.FlightRepository;
 import org.example.airlineapi.repository.PersonRepository;
 import org.example.airlineapi.repository.TicketRepository;
-import org.example.airlineapi.utils.Specification.TicketSpecs;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +29,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -90,7 +90,7 @@ class TicketServiceTest {
                 .destination("LAX")
                 .departureTime(LocalDateTime.of(2024, 1, 1, 10, 0))
                 .arrivalTime(LocalDateTime.of(2024, 1, 1, 14, 0))
-                .availableSeats(100)
+                .numberOfSeats(100)
                 .build();
 
         ticket1 = Ticket.builder()
@@ -176,6 +176,7 @@ class TicketServiceTest {
         when(flightRepository.findWithLockById(flightId)).thenReturn(Optional.ofNullable(flight));
         when(personRepository.findWithLockById(command.getPersonId())).thenReturn(Optional.ofNullable(person));
         when(ticketRepository.findByPersonIdAndFlightId(command.getPersonId(), flightId)).thenReturn(List.of());
+        when(ticketRepository.existsBySeatNumberAndFlightId(command.getSeatNumber(), flightId)).thenReturn(false);
         when(ticketRepository.save(any(Ticket.class))).thenReturn(ticket);
 
         TicketDto result = ticketService.create(flightId, command);
@@ -184,6 +185,7 @@ class TicketServiceTest {
         verify(flightRepository).findWithLockById(flightId);
         verify(personRepository).findWithLockById(command.getPersonId());
         verify(ticketRepository).findByPersonIdAndFlightId(command.getPersonId(), flightId);
+        verify(ticketRepository).existsBySeatNumberAndFlightId(command.getSeatNumber(), flightId);
         verify(ticketRepository).save(any(Ticket.class));
         verifyNoMoreInteractions(ticketRepository, flightRepository, personRepository);
     }
@@ -210,12 +212,14 @@ class TicketServiceTest {
 
         when(flightRepository.findWithLockById(flightId)).thenReturn(Optional.ofNullable(flight));
         when(personRepository.findWithLockById(command.getPersonId())).thenReturn(Optional.empty());
+        when(ticketRepository.existsBySeatNumberAndFlightId(command.getSeatNumber(), flightId)).thenReturn(false);
 
         assertThatExceptionOfType(NotFoundException.class)
                 .isThrownBy(() -> ticketService.create(flightId, command))
                 .withMessage("Person with id " + command.getPersonId() + " not found");
         verify(flightRepository).findWithLockById(flightId);
         verify(personRepository).findWithLockById(command.getPersonId());
+        verify(ticketRepository).existsBySeatNumberAndFlightId(command.getSeatNumber(), flightId);
         verifyNoMoreInteractions(flightRepository, personRepository, ticketRepository);
     }
 
@@ -224,14 +228,16 @@ class TicketServiceTest {
         long flightId = 1L;
         CreateTicketCommand command = createTicketCommand();
         flight.setTickets(Set.of(ticket2));
-        flight.setAvailableSeats(0);
+        flight.setNumberOfSeats(0);
 
         when(flightRepository.findWithLockById(flightId)).thenReturn(Optional.of(flight));
+        when(ticketRepository.existsBySeatNumberAndFlightId(command.getSeatNumber(), flightId)).thenReturn(false);
 
         assertThatExceptionOfType(OverbookingException.class)
                 .isThrownBy(() -> ticketService.create(flightId, command))
                 .withMessage("Flight with id " + flightId + " has no available seats");
         verify(flightRepository).findWithLockById(flightId);
+        verify(ticketRepository).existsBySeatNumberAndFlightId(command.getSeatNumber(), flightId);
         verifyNoMoreInteractions(flightRepository, personRepository, ticketRepository);
     }
 
@@ -249,6 +255,7 @@ class TicketServiceTest {
         when(flightRepository.findWithLockById(flightId)).thenReturn(Optional.of(flight));
         when(personRepository.findWithLockById(command.getPersonId())).thenReturn(Optional.of(person));
         when(ticketRepository.findByPersonIdAndFlightId(command.getPersonId(), flightId)).thenReturn(List.of(tempTicket));
+        when(ticketRepository.existsBySeatNumberAndFlightId(command.getSeatNumber(), flightId)).thenReturn(false);
 
         assertThatExceptionOfType(AlreadyHaveTicketException.class)
                 .isThrownBy(() -> ticketService.create(flightId, command))
@@ -256,6 +263,7 @@ class TicketServiceTest {
         verify(flightRepository).findWithLockById(flightId);
         verify(personRepository).findWithLockById(command.getPersonId());
         verify(ticketRepository).findByPersonIdAndFlightId(command.getPersonId(), flightId);
+        verify(ticketRepository).existsBySeatNumberAndFlightId(command.getSeatNumber(), flightId);
         verifyNoMoreInteractions(flightRepository, personRepository, ticketRepository);
     }
 
@@ -357,6 +365,8 @@ class TicketServiceTest {
     CreateTicketCommand createTicketCommand() {
         return CreateTicketCommand.builder()
                 .personId(1L)
+                .seatNumber(4)
+                .price(BigDecimal.valueOf(99.99))
                 .build();
     }
 

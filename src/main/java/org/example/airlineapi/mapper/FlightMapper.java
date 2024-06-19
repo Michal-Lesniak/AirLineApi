@@ -3,6 +3,7 @@ package org.example.airlineapi.mapper;
 import org.example.airlineapi.model.flight.Flight;
 import org.example.airlineapi.model.flight.command.CreateFlightCommand;
 import org.example.airlineapi.model.flight.dto.FlightDto;
+import org.example.airlineapi.model.flight.dto.SimpleFlightDto;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,7 +15,7 @@ public class FlightMapper {
                 .destination(command.destination())
                 .departureTime(command.departureTime())
                 .arrivalTime(command.arrivalTime())
-                .availableSeats(command.availableSeats())
+                .numberOfSeats(command.availableSeats())
                 .build();
     }
 
@@ -26,7 +27,15 @@ public class FlightMapper {
                 .destination(flight.getDestination())
                 .departureTime(flight.getDepartureTime())
                 .arrivalTime(flight.getArrivalTime())
-                .availableSeats(flight.getAvailableSeats())
+                .numberOfSeats(flight.getNumberOfSeats())
+                .build();
+    }
+
+    public static SimpleFlightDto toSimpleDto(Flight flight){
+        return SimpleFlightDto.builder()
+                .flightNumber(flight.getFlightNumber())
+                .origin(flight.getOrigin())
+                .destination(flight.getDestination())
                 .build();
     }
 }

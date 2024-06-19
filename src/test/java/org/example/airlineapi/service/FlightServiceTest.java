@@ -10,7 +10,6 @@ import org.example.airlineapi.model.flight.command.UpdateFlightTimeCommand;
 import org.example.airlineapi.model.flight.dto.FlightDto;
 import org.example.airlineapi.model.ticket.Ticket;
 import org.example.airlineapi.repository.FlightRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,13 +19,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
@@ -61,7 +61,8 @@ class FlightServiceTest {
                 .destination("LAX")
                 .departureTime(LocalDateTime.now().plusDays(1))
                 .arrivalTime(LocalDateTime.now().plusDays(1).plusHours(5))
-                .availableSeats(100)
+                .numberOfSeats(100)
+                .tickets(Set.of())
                 .build();
 
         flight2 = Flight.builder()
@@ -71,7 +72,7 @@ class FlightServiceTest {
                 .destination("JFK")
                 .departureTime(LocalDateTime.now().plusDays(2))
                 .arrivalTime(LocalDateTime.now().plusDays(2).plusHours(5))
-                .availableSeats(100)
+                .numberOfSeats(100)
                 .build();
     }
 
@@ -143,6 +144,58 @@ class FlightServiceTest {
     }
 
     @Test
+    void testGetFreeSeat_ShouldReturnSetOfAllFreeSeats() {
+        long id = 1L;
+        List<Long> expectedList = LongStream.rangeClosed(1, 100).boxed().toList();
+
+        when(flightRepository.findWithLockById(id)).thenReturn(Optional.ofNullable(flight1));
+        Set<Long> result = flightService.getFreeSeat(id);
+
+
+        assertEquals(expectedList.size(), result.size());
+        assertTrue(result.containsAll(expectedList));
+        verify(flightRepository).findWithLockById(id);
+        verifyNoMoreInteractions(flightRepository);
+    }
+
+    @Test
+    void testGetFreeSeat_ShouldReturnSetOfFreeSeats() {
+        long id = 1L;
+        long expectedSize = 98;
+
+        flight1.setTickets(Set.of(
+                Ticket.builder().seatNumber(1L).build(),
+                Ticket.builder().seatNumber(2L).build()));
+
+        when(flightRepository.findWithLockById(id)).thenReturn(Optional.ofNullable(flight1));
+        Set<Long> result = flightService.getFreeSeat(id);
+
+
+        assertEquals(expectedSize, result.size());
+        assertTrue(result.contains(3L));
+        assertTrue(result.contains(95L));
+        assertFalse(result.contains(1L));
+        verify(flightRepository).findWithLockById(id);
+        verifyNoMoreInteractions(flightRepository);
+    }
+
+    @Test
+    void testGetFreeSeat_ShouldReturnEmptySetOfFreeSeats(){
+        long id = 1L;
+        Set<Long> list = LongStream.rangeClosed(1, 100).boxed().collect(Collectors.toSet());
+        flight1.setTickets(list.stream().map(seatNumber -> Ticket.builder().seatNumber(seatNumber).build()).collect(Collectors.toSet()));
+
+        when(flightRepository.findWithLockById(id)).thenReturn(Optional.ofNullable(flight1));
+        Set<Long> result = flightService.getFreeSeat(id);
+
+
+        assertEquals(0, result.size());
+        assertFalse(result.contains(41L));
+        verify(flightRepository).findWithLockById(id);
+        verifyNoMoreInteractions(flightRepository);
+    }
+
+    @Test
     void testCreate_ShouldCreateFlight() {
         CreateFlightCommand command = createFlightCommand();
         FlightDto expectedFlightDto = toDto(flight1);
@@ -192,7 +245,7 @@ class FlightServiceTest {
         long id = 1L;
         Ticket ticket = Ticket.builder()
                 .id(1L)
-                .ticketNumber(1)
+                .ticketNumber("AV-123")
                 .build();
         flight1.setTickets(Set.of(ticket));
         CreateFlightCommand command = createFlightCommand();

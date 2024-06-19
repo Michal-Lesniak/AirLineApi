@@ -4,9 +4,10 @@ import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.example.airlineapi.exception.AlreadyHaveTicketException;
 import org.example.airlineapi.exception.ArgumentCannotBeNullException;
-import org.example.airlineapi.exception.OverbookingException;
 import org.example.airlineapi.exception.NotFoundException;
+import org.example.airlineapi.exception.OverbookingException;
 import org.example.airlineapi.exception.UpdateOptimisticLockingException;
+import org.example.airlineapi.exception.model.BookedSeatException;
 import org.example.airlineapi.mapper.TicketMapper;
 import org.example.airlineapi.model.flight.Flight;
 import org.example.airlineapi.model.person.Person;
@@ -19,16 +20,13 @@ import org.example.airlineapi.repository.FlightRepository;
 import org.example.airlineapi.repository.PersonRepository;
 import org.example.airlineapi.repository.TicketRepository;
 import org.example.airlineapi.utils.Specification.TicketSpecs;
-import org.example.airlineapi.utils.TriFunction;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.MessageFormat;
-import java.util.function.BiFunction;
 
 import static org.example.airlineapi.mapper.TicketMapper.toDto;
 
@@ -81,7 +79,14 @@ public class TicketService {
                 .orElseThrow(() -> new NotFoundException(MessageFormat
                         .format("Flight with id {0} not found", flightId)));
 
-        if(flight.getTickets().size() >= flight.getAvailableSeats()){
+        int bookedTicket = flight.getTickets().size();
+
+        if(ticketRepository.existsBySeatNumberAndFlightId(command.getSeatNumber(), flightId )){
+            throw new BookedSeatException(MessageFormat
+                    .format("Flight with id {0} already has a ticket with seat number {1}", flightId, command.getSeatNumber()));
+        }
+
+        if(bookedTicket >= flight.getNumberOfSeats()){
             throw new OverbookingException(MessageFormat
                     .format("Flight with id {0} has no available seats", flightId));
         }
@@ -95,6 +100,7 @@ public class TicketService {
                     .format("Person with id {0} already has a ticket for flight with id {1}", command.getPersonId(), flightId));
         }
 
+        ticket.setTicketNumber(MessageFormat.format("{0}-{1}", flight.getFlightNumber(), bookedTicket + 1));
         ticket.setFlight(flight);
         ticket.setPerson(person);
 

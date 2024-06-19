@@ -10,7 +10,6 @@ public class TicketMapper {
 
     public static Ticket fromCommand(CreateTicketCommand command) {
         return Ticket.builder()
-                .ticketNumber(command.getTicketNumber())
                 .seatNumber(command.getSeatNumber())
                 .price(command.getPrice())
                 .build();
@@ -22,6 +21,8 @@ public class TicketMapper {
                 .ticketNumber(ticket.getTicketNumber())
                 .seatNumber(ticket.getSeatNumber())
                 .price(ticket.getPrice())
+                .person(PersonMapper.toSimpleDto(ticket.getPerson()))
+                .flight(FlightMapper.toSimpleDto(ticket.getFlight()))
                 .build();
     }
 

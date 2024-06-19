@@ -19,14 +19,14 @@ CREATE TABLE flight (
                         destination VARCHAR(30) NOT NULL,
                         departure_time TIMESTAMP NOT NULL,
                         arrival_time TIMESTAMP NOT NULL,
-                        available_seats INT NOT NULL,
+                        number_of_seats INT NOT NULL,
                         version INT NOT NULL DEFAULT 1
 );
 
 CREATE TABLE ticket (
                         id BIGINT AUTO_INCREMENT PRIMARY KEY,
                         seat_number INT NOT NULL,
-                        ticket_number INT NOT NULL,
+                        ticket_number VARCHAR(10) NOT NULL,
                         price DECIMAL(10, 2) NOT NULL,
                         flight_id BIGINT,
                         person_id BIGINT,

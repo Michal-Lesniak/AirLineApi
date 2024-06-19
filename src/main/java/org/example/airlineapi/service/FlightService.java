@@ -1,5 +1,6 @@
 package org.example.airlineapi.service;
 
+import jakarta.persistence.Cacheable;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.example.airlineapi.exception.DeleteOptimisticLockingException;
@@ -23,6 +24,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.text.MessageFormat;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 import static org.example.airlineapi.mapper.FlightMapper.fromCommand;
 import static org.example.airlineapi.mapper.FlightMapper.toDto;
@@ -39,6 +45,19 @@ public class FlightService {
                 .stream()
                 .map(FlightMapper::toDto)
                 .toList();
+    }
+
+    @Transactional
+    public Set<Long> getFreeSeat(long id){
+        Flight flight = flightRepository.findWithLockById(id)
+                .orElseThrow(() -> new NotFoundException(MessageFormat
+                        .format("Flight with id {0} not found", id)));
+
+        return LongStream.rangeClosed(1, flight.getNumberOfSeats())
+                .filter(seat -> flight.getTickets().stream().noneMatch(ticket -> ticket.getSeatNumber() == seat))
+                .boxed()
+                .collect(Collectors.toSet());
+
     }
 
     @Transactional(readOnly = true)
@@ -80,7 +99,7 @@ public class FlightService {
             flight.setDestination(command.destination());
             flight.setDepartureTime(command.departureTime());
             flight.setArrivalTime(command.arrivalTime());
-            flight.setAvailableSeats(command.availableSeats());
+            flight.setNumberOfSeats(command.availableSeats());
             return toDto(flight);
         } catch (OptimisticLockException e) {
             throw new UpdateOptimisticLockingException(MessageFormat
@@ -97,8 +116,6 @@ public class FlightService {
         flight.setDepartureTime(command.getDepartureTime());
         flight.setArrivalTime(command.getArrivalTime());
 
-        //TODO send a message to the customers that the flight time was updated
-
         return toDto(flight);
     }
 
@@ -108,8 +125,6 @@ public class FlightService {
             Flight flight = flightRepository.findById(id)
                     .orElseThrow(() -> new NotFoundException(MessageFormat
                             .format("Flight with id {0} not found", id)));
-
-            //TODO send a message to the customers that the flight was canceled
 
             flightRepository.delete(flight);
         } catch (OptimisticLockException e) {

@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -50,6 +51,11 @@ public class FlightController {
     @GetMapping("/{id}")
     public FlightDto getFlightById(@PathVariable long id){
         return flightService.getById(id);
+    }
+
+    @GetMapping("/{id}/free-seats")
+    public Set<Long> getFreeSeats(@PathVariable long id){
+        return flightService.getFreeSeat(id);
     }
 
     @PostMapping

@@ -32,7 +32,7 @@ public class Flight {
     private String destination;
     private LocalDateTime departureTime;
     private LocalDateTime arrivalTime;
-    private int availableSeats;
+    private int numberOfSeats;
 
     @Version
     private long version;

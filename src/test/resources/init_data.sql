@@ -4,7 +4,7 @@ INSERT INTO person (first_name, last_name, email, phone_number, date_of_birth) V
                                                                                    ('Charlie', 'Brown', 'charlie.brown@example.com', '1122334455', '1985-03-03'),
                                                                                       ('David', 'White', 'david.2s@ds.pl','1234567890', '1990-01-01');
 
-INSERT INTO flight (flight_number, origin, destination, departure_time, arrival_time, available_seats) VALUES
+INSERT INTO flight (flight_number, origin, destination, departure_time, arrival_time, number_of_seats) VALUES
                                                                                                               ('AA123', 'New York', 'Los Angeles', '2024-06-01', '2024-06-01', 150),
                                                                                                               ('BB456', 'Chicago', 'San Francisco', '2024-06-02', '2024-06-02', 200),
                                                                                                               ('CC789', 'Miami', 'Seattle', '2024-06-03', '2024-06-03', 180);
